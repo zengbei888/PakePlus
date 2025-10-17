@@ -1,0 +1,377 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>失效分析报告</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-blue-800">失效分析报告</h1>
+            <p class="text-gray-600">创建专业的失效分析报告文档</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左侧控制面板 -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-blue-700">操作面板</h2>
+                
+                <div class="space-y-4">
+                    <!-- Word导入 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">导入Word文档</label>
+                        <input type="file" id="wordImport" accept=".docx" class="hidden">
+                        <button onclick="document.getElementById('wordImport').click()" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-file-word mr-2"></i>选择Word文件
+                        </button>
+                    </div>
+
+                    <!-- 图片上传 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">上传图片</label>
+                        <input type="file" id="imageUpload" accept="image/*" multiple class="hidden">
+                        <button onclick="document.getElementById('imageUpload').click()" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-image mr-2"></i>上传图片
+                        </button>
+                    </div>
+
+                    <!-- 导出Word -->
+                    <div class="mb-4">
+                        <button id="exportWord" 
+                                class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-file-export mr-2"></i>导出Word文档
+                        </button>
+                    </div>
+
+                    <!-- 重置数据 -->
+                    <div class="mb-4">
+                        <button id="resetData" 
+                                class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-trash-alt mr-2"></i>重置所有数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间报告编辑区 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-6 rounded-lg shadow-md h-full">
+                    <div id="reportEditor" class="min-h-[600px] p-4 border border-gray-200 rounded">
+                        <h2 class="text-2xl font-bold mb-4 text-center">《失效分析报告》</h2>
+						<div class="space-y-4">
+                        <h2 class="text-xl font-semibold text-gray-700">基本信息</h2>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">报告标题</label>
+                            <input type="text" id="reportTitle" class="w-full p-2 border border-gray-300 rounded" placeholder="输入报告标题">
+                        </div>
+                    <form id="reportForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <!-- 基本信息部分 -->
+                             <div class="space-y-4">
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">客户代码</label>
+										<input type="text" id="reportTitle" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入客户代码">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">接收日期</label>
+						                <input type="date" id="failureDate" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">产品型号</label>
+						                <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入产品型号">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">产品编码</label>
+						                <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入产品编码">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">工单总套数</label>
+										<input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入工单总套数">
+						            </div>
+						        </div>
+						        <div class="space-y-4">
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">不良品数量</label>
+										<input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入不良品数量">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">批次</label>
+						                <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入批次号">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">工单失效率</label>
+										<input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入工单失效率">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">分析负责人</label>
+										<input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入分析人">
+						            </div>
+						            <div>
+						                <label class="block text-sm font-medium text-gray-700">责任部门</label>
+										<input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入责任部门">
+						            </div>
+						        </div>
+								    <div>
+								        <label class="block text-sm font-medium text-gray-700">要求回复日期</label>
+								        <input type="date" id="failureDate" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+								    </div>
+									<div>
+									    <label class="block text-sm font-medium text-gray-700">实际回复日期</label>
+									    <input type="date" id="failureDate" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+									</div>
+									<div>
+									<div class="form-group">
+										<h2 class="text-xl font-semibold text-gray-700">小组成员</h2>
+									</div>
+		                            <!-- 第一行成员 -->
+		                            <div class="flex space-x-4">
+		                            <div class="flex-1">
+		                                <label class="block text-sm font-medium text-gray-700">姓名1</label>
+		                                <input type="text" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="输入姓名1">
+		                            </div>
+		                            <div class="flex-1">
+		                                <label class="block text-sm font-medium text-gray-700">部门1</label>
+		                                <input type="text" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="输入部门1">
+		                            </div>
+		                        </div>
+		                            <!-- 第二行成员 -->
+                                        <div class="flex space-x-4">
+		                                <div class="flex-1">
+		                                <label class="block text-sm font-medium text-gray-700">姓名2</label>
+		                                <input type="text" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="输入姓名2">
+		                            </div>
+		                                <div class="flex-1">
+		                                <label class="block text-sm font-medium text-gray-700">部门2</label>
+		                                <input type="text" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="输入部门2">
+		                            </div>
+		                        </div>
+		                            <!-- 第三行成员 -->
+		                                <div class="flex space-x-4">
+		                                <div class="flex-1">
+		                                <label class="block text-sm font-medium text-gray-700">姓名3</label>
+		                                <input type="text" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="输入姓名3">
+		                            </div>
+		                                <div class="flex-1">
+		                                <label class="block text-sm font-medium text-gray-700">部门3</label>
+		                                <input type="text" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="输入部门3">
+		                            </div>
+		                        </div>
+						        
+						        <!-- 更多表单字段... -->
+						    </form>
+						</div>
+						
+						<!-- 问题背景部分 -->
+						    <h2 class="text-xl font-semibold text-gray-700">1.0 Issue Background（问题背景）</h2>
+						    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">When（时间）</label>
+						            <input type="datetime-local" name="issueTime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">Which（物料号）</label>
+						            <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入物料号">
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">Who（客户）</label>
+						            <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入客户">
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">Where（地点）</label>
+						            <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入失效地点">
+						        </div>
+						        <div class="md:col-span-2">
+						            <label class="block text-sm font-medium text-gray-700">What（现象）</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入故障现象" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">QTY（缺陷数量）</label>
+						            <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入缺陷数量">
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">NG SN</label>
+						            <input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入SN">
+									<label class="block text-sm font-medium text-gray-700">NG SN</label>
+									<input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入SN">
+									<label class="block text-sm font-medium text-gray-700">NG SN</label>
+									<input type="text" id="batchNumber" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入SN">
+						        </div>
+						    </div>
+						</div>
+						     
+						    <h2 class="text-xl font-semibold text-gray-700 mb-4">2.0  Visual inspection（目视检查）</h2>
+						    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">无损排查</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入无损排查结果" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">相关佐证</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入相关佐证或记录" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">无损分析</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入无损分析结果" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+						    </div>
+						</div>
+						
+						<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+						    <h2 class="text-xl font-semibold text-gray-700 mb-4">3.0  Function Analysis（功能分析）</h2>
+						    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">在线单点测量结果</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入在线单点测量结果" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">在线链路测量结果</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入在线链路测量结果" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">单体单点测量结果</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入单体单点测量结果" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+								<div>
+								    <label class="block text-sm font-medium text-gray-700">周边相关部门建议</label>
+								    <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入周边相关部门建议" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+								</div>
+								<div>
+								    <label class="block text-sm font-medium text-gray-700">客户建议</label>
+								    <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入客户建议" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+								</div>
+								<div>
+								    <label class="block text-sm font-medium text-gray-700">初步分析结论</label>
+								    <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入初步分析结论" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+								</div>
+						    </div>
+						</div>
+						<div class="bg-white rounded-lg shadow-md p-6 mb-8" >
+						    <h2 class="text-xl font-semibold text-gray-700 mb-4">4.0 Root cause / FA result（根本原因/结果）</h2>
+						    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">根本原因</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入根本原因" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+						        <div>
+						            <label class="block text-sm font-medium text-gray-700">结果</label>
+						            <textarea id="batchNumber" class="auto-resize w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="输入结果" rows="3"oninput="this.style.height = 'auto'; this.style.height = this.scrollHeight + 'px'"></textarea>
+						        </div>
+								</div>
+								<div class="form-group">
+								    <label class="form-label">是否送第三方检测</label>
+								    <div class="mt-2">
+								        <label class="inline-flex items-center mr-4">
+								            <input type="radio" class="form-radio" name="thirdPartyTest" value="yes">
+								            <span class="ml-2">是</span>
+								        </label>
+								        <label class="inline-flex items-center">
+								            <input type="radio" class="form-radio" name="thirdPartyTest" value="no" checked>
+								            <span class="ml-2">否</span>
+								        </label>
+								    </div>
+								</div>
+						    </div>
+						</div>
+
+                        <div id="imageGallery" class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                            <!-- 图片预览区域 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 图片上传处理
+        document.getElementById('imageUpload').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const gallery = document.getElementById('imageGallery');
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.match('image.*')) continue;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'relative group';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-48 object-cover rounded';
+                    img.alt = '失效分析图片证据';
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity';
+                    deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    deleteBtn.onclick = function() {
+                        imgContainer.remove();
+                    };
+                    
+                    imgContainer.appendChild(img);
+                    imgContainer.appendChild(deleteBtn);
+                    gallery.appendChild(imgContainer);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Word导入处理
+        document.getElementById('wordImport').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const arrayBuffer = event.target.result;
+                
+                mammoth.extractRawText({arrayBuffer: arrayBuffer})
+                    .then(function(result) {
+                        const text = result.value;
+                        // 简单地将内容放入分析过程区域
+                        document.getElementById('analysisProcess').value = text;
+                    })
+                    .catch(function(error) {
+                        alert('Word文档导入失败: ' + error.message);
+                    });
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // 导出Word文档
+        document.getElementById('exportWord').addEventListener('click', function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            html2canvas(document.getElementById('reportEditor')).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', 10, 10, 190, 0);
+                doc.save('失效分析报告.pdf');
+            });
+        });
+		
+
+        // 重置数据
+        document.getElementById('resetData').addEventListener('click', function() {
+            if (confirm('确定要重置所有数据吗？此操作不可撤销。')) {
+                document.getElementById('reportTitle').value = '';
+                document.getElementById('failureDescription').value = '';
+                document.getElementById('analysisProcess').value = '';
+                document.getElementById('conclusion').value = '';
+                document.getElementById('imageGallery').innerHTML = '';
+            }
+        });
+		
+    </script>
+</body>
+</html>
