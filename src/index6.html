@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维修案例索引</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">维修案例索引</h1>
+            <p class="text-gray-600">浏览、搜索和预览您的案例</p>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div class="flex-1 relative">
+                    <input type="text" id="searchInput" placeholder="搜索案例..." 
+                           class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <div class="flex gap-2">
+                    <button id="refreshBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>刷新
+                    </button>
+                    <button id="selectFolderBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-folder-open mr-2"></i>选择文件夹
+                    </button>
+                </div>
+            </div>
+            <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden">
+        </div>
+
+        <div id="loading" class="hidden text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-blue-500"></i>
+            <p class="mt-2 text-gray-600">正在加载文件...</p>
+        </div>
+
+        <div id="emptyState" class="hidden text-center py-12 bg-white rounded-xl shadow-sm">
+            <i class="fas fa-folder-open text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-medium text-gray-600">没有找到文件</h3>
+            <p class="text-gray-500 mt-1">请选择文件夹或尝试其他搜索词</p>
+        </div>
+
+        <div id="fileCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
+    </div>
+
+    <script src="app6.js"></script>
+</body>
+</html>
