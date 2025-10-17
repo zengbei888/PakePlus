@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维修指引库</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <span class="text-xl font-bold text-indigo-600">维修指引库</span>
+                    </div>
+                </div>
+                <div class="ml-6 flex items-center">
+                    <span id="userInfo" class="text-gray-700"></span>
+                    <button onclick="logout()" class="ml-4 px-3 py-1 rounded text-sm text-white bg-red-500 hover:bg-red-600 transition-all">退出</button>
+				<div class="ml-6 flex items-center">
+				    <span id="userInfo" class="text-gray-700"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+	
+	<a href="page1-1.html" target="_blank" class="block">
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer" 
+				     style="border: 1px solid #2196F3; background: linear-gradient(135deg, #E3F2FD, #B3E5FC);">
+                    <div class="px-4 py-5 sm:p-6 flex items-center">
+                        <div class="mr-4 p-3 rounded-full bg-blue-100 text-blue-600">
+                            <i class="fas fa-chart-line text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg leading-6 font-medium text-gray-900">器件级返工&维修指引</h3>
+                            <p class="mt-1 text-sm text-gray-500">查看器件类型级返工&维修MI</p>
+                        </div>
+                    </div>
+                </div>
+			</a>
+				
+			<a href="page2-2.html" target="_blank" class="block">
+				<div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer" 
+				     style="border: 1px solid #4CAF50; background: linear-gradient(145deg, #E8F5E9, #DCEDC8);">
+				    <div class="px-4 py-5 sm:p-6 flex items-center">
+				        <div class="mr-4 p-3 rounded-full bg-green-100 text-green-600">
+				            <i class="fas fa-users text-xl"></i>
+				        </div>
+				        <div>
+				            <h3 class="text-lg leading-6 font-medium text-gray-900">返工&维修视频教学</h3>
+				            <p class="mt-1 text-sm text-gray-500">器件类型级返工&维修视频教学</p>
+				        </div>
+				    </div>
+				</div>
+			</a>
+				
+				
+			<a href="page3-3.html" target="_blank" class="block">
+				<div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer"
+				     style="border: 1px solid #8b3dff; background: linear-gradient(155deg, #eee5ff, #bfb3ff);">
+				    <div class="px-4 py-5 sm:p-6 flex items-center">
+				        <div class="mr-4 p-3 rounded-full bg-yellow-100 text-yellow-600">
+				            <i class="fas fa-cog text-xl"></i>
+				        </div>
+				        <div>
+				            <h3 class="text-lg leading-6 font-medium text-gray-900">维修分析案例索引</h3>
+				            <p class="mt-1 text-sm text-gray-500">维修分析案例指引&参考</p>
+				        </div>
+				    </div>
+				</div>
+			</a>
+				
+				
+			<a href="index3.html" target="_blank" class="block">
+				<div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer"
+				     style="border: 1px solid #3dd8ff; background: linear-gradient(165deg, #e5f9ff, #b3f2ff);">
+				    <div class="px-4 py-5 sm:p-6 flex items-center">
+				        <div class="mr-4 p-3 rounded-full bg-yellow-100 text-yellow-600">
+				            <i class="fa fa-check text-xl"></i>
+				        </div>
+				        <div>
+				            <h3 class="text-lg leading-6 font-medium text-gray-900">特殊器件返工&维修</h3>
+				            <p class="mt-1 text-sm text-gray-500">特殊器件返工&维修参数</p>
+				        </div>
+				    </div>
+				</div>
+			</a>
+				
+			<a href="index6.html" target="_blank" class="block">
+				<div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer"
+				     style="border: 1px solid #9e3dff; background: linear-gradient(175deg, #e6e5ff, #b3bbff);">
+				    <div class="px-4 py-5 sm:p-6 flex items-center">
+				        <div class="mr-4 p-3 rounded-full bg-yellow-100 text-yellow-600">
+				            <i class="fa fa-hand-pointer text-xl"></i>
+				        </div>
+				        <div>
+				            <h3 class="text-lg leading-6 font-medium text-gray-900">维修案例索引</h3>
+				            <p class="mt-1 text-sm text-gray-500">维修案例索引</p>
+				        </div>
+				    </div>
+				</div>
+			</a>
+				
+			<a href="index5.html" target="_blank" class="block">
+				<div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer"
+				     style="border: 1px solid #e8ff3d; background: linear-gradient(185deg, #5b6016, #eeffb3);">
+				    <div class="px-4 py-5 sm:p-6 flex items-center">
+				        <div class="mr-4 p-3 rounded-full bg-yellow-100 text-yellow-600">
+				            <i class="fa fa-search text-xl"></i>
+				        </div>
+				        <div>
+				            <h3 class="text-lg leading-6 font-medium text-gray-900">测试记录查询</h3>
+				            <p class="mt-1 text-sm text-gray-500">测试记录查询</p>
+				        </div>
+				    </div>
+				</div>
+			</a>
+				
+
+				
+			<a href="index7.html" target="_blank" class="block">
+				<div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer"
+				     style="border: 1px solid #2196F4; background: linear-gradient(195deg, #E3F2FD, #B3E5FC);">
+				    <div class="px-4 py-5 sm:p-6 flex items-center">
+				        <div class="mr-4 p-3 rounded-full bg-yellow-100 text-yellow-600">
+				            <i class="fas fa-sync-alt text-xl"></i>
+				        </div>
+				        <div>
+				            <h3 class="text-lg leading-6 font-medium text-gray-900">失效分析报告</h3>
+				            <p class="mt-1 text-sm text-gray-500">失效分析报告</p>
+				        </div>
+				    </div>
+				</div>
+			</a>
+			
+			
+			<a href="https://aiforge.scc.com.cn/ai_apaas/share/home?short_code=7VsNCy5dRQU" target="_blank" class="block">
+				<div class="card-hover bg-white overflow-hidden shadow rounded-lg transition-all cursor-pointer"
+				     style="border: 1px solid #FFEB3B; background: linear-gradient(195deg, #FFF9E6, #FFF3B0);">
+				    <div class="px-4 py-5 sm:p-6 flex items-center">
+				        <div class="mr-4 p-3 rounded-full bg-yellow-100 text-yellow-600">
+				            <i class="fas fa-spinner fa-spin text-xl"></i>
+				        </div>
+				        <div>
+				            <h3 class="text-lg leading-6 font-medium text-gray-900">百度智能云千帆AppBuilder</h3>
+				            <p class="mt-1 text-sm text-gray-500">百度智能云千帆AppBuilder（引用）</p>
+				        </div>
+				    </div>
+				</div>
+			</a>
+			
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        // 显示当前用户信息
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = '维修指引库.html';
+        } else {
+            document.getElementById('userInfo').textContent = `欢迎，${currentUser.username} (${currentUser.role === 'admin' ? '管理员' : '普通用户'})`;
+            
+            // 如果是普通用户，隐藏某些卡片
+            if (currentUser.role === 'users') {
+                document.querySelectorAll('.card-hover')[10].style.display = 'none';
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'dashboard.html';
+        }
+        
+        function navigateTo(page) {
+            window.location.href = page;
+        }
+    </script>
+</body>
+</html>
