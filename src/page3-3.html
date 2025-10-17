@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>维修指引库 - 仪表盘</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .sidebar {
+            transition: all 0.3s;
+        }
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+        }
+        .video-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- 侧边栏 -->
+
+        <!-- 主内容区 -->
+        <div class="flex-1 overflow-auto">
+            <header class="bg-white shadow-sm">
+                <div class="flex justify-between items-center p-4">
+                    <h1 class="text-2xl font-bold text-gray-800">维修指引总览</h1>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <input type="text" placeholder="搜索案例..." class="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                        <button class="p-2 text-gray-500 hover:text-blue-600">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <main class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 案例卡片1 -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-xl font-semibold text-gray-800">RMA返工维修</h3>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">已解决</span>
+                            </div>
+                            <p class="mt-2 text-gray-600">201116207客退U1分析案例指引</p>
+                            <div class="mt-4 flex space-x-3">
+                            </div>
+                            <div class="mt-4">
+                                <a href="201116207客退U1分析报告.pdf" 
+                                   class="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                                    <i class="fas fa-bug mr-2"></i>维修案例
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 案例卡片2 -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+                        <div class="p-6">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-xl font-semibold text-gray-800">白色油墨PCB返工维修</h3>
+                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">未解决</span>
+                            </div>
+                            <p class="mt-2 text-gray-600">白色油墨PCB返工维修</p>
+                            <div class="mt-4 flex space-x-3">
+                            </div>
+                            <div class="mt-4">
+                                <a href="case_detail.html?id=2" 
+                                   class="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                                    <i class="fas fa-bug mr-2"></i>维修案例
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+					
+					<!-- 案例卡片3 -->
+					<div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+					    <div class="p-6">
+					        <div class="flex justify-between items-start">
+					            <h3 class="text-xl font-semibold text-gray-800">鸥翼型器件返工维修</h3>
+					            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">未解决</span>
+					        </div>
+					        <p class="mt-2 text-gray-600">鸥翼型器件返工维修</p>
+					        <div class="mt-4 flex space-x-3">
+					        </div>
+					        <div class="mt-4">
+					            <a href="case_detail.html?id=2" 
+					               class="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+					                <i class="fas fa-bug mr-2"></i>维修案例
+					            </a>
+					        </div>
+					    </div>
+					</div>
+					
+					<!-- 案例卡片4 -->
+					<div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+					    <div class="p-6">
+					        <div class="flex justify-between items-start">
+					            <h3 class="text-xl font-semibold text-gray-800">通孔器件返工维修</h3>
+					            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">未解决</span>
+					        </div>
+					        <p class="mt-2 text-gray-600">通孔器件返工维修</p>
+					        <div class="mt-4 flex space-x-3">
+					        </div>
+					        <div class="mt-4">
+					            <a href="case_detail.html?id=2" 
+					               class="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+					                <i class="fas fa-bug mr-2"></i>维修案例
+					            </a>
+					        </div>
+					    </div>
+					</div>
+					
+					<!-- 案例卡片5 -->
+					<div class="bg-white rounded-xl shadow-md overflow-hidden card-hover">
+					    <div class="p-6">
+					        <div class="flex justify-between items-start">
+					            <h3 class="text-xl font-semibold text-gray-800">鸥翼型器件返工维修 </h3>
+					            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">未解决</span>
+					        </div>
+					        <p class="mt-2 text-gray-600">鸥翼型器件返工维修 </p>
+					        <div class="mt-4 flex space-x-3">
+					        </div>
+					        <div class="mt-4">
+					            <a href="case_detail.html?id=2" 
+					               class="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+					                <i class="fas fa-bug mr-2"></i>维修案例
+					            </a>
+					        </div>
+					    </div>
+					</div>
+
+
+                    <!-- 添加新案例卡片 -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden card-hover border-2 border-dashed border-gray-300 hover:border-blue-400">
+                        <div class="p-6 flex flex-col items-center justify-center h-full">
+                            <i class="fas fa-plus-circle text-4xl text-blue-500 mb-4"></i>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">添加新案例</h3>
+                            <a href="save.html" 
+                               class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                                <i class="fas fa-plus mr-2"></i>创建案例
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // 显示登录用户工号
+        document.getElementById('userBadge').textContent = localStorage.getItem('badgeNumber') || '未登录';
+
+        function openPDF(pdfPath) {
+            window.open(pdfPath, '_blank');
+        }
+
+        function playVideo(videoPath, playerId) {
+            const videoPlayer = document.getElementById(playerId);
+            const videoElement = videoPlayer.querySelector('video');
+            videoElement.querySelector('source').src = videoPath;
+            videoElement.load();
+            videoPlayer.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
