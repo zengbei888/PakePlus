@@ -1,0 +1,12 @@
+
+{
+  "name": "my-nwjs-app",
+  "version": "1.0.0",
+  "main": "维修指引库.html",
+  "scripts": {
+    "build": "nw-builder --platform win64 --flavor sdk --outDir ./dist"
+  },
+  "devDependencies": {
+    "nw-builder": "3.5.0"
+  }
+}
