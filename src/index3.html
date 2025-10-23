@@ -47,30 +47,29 @@
             <!-- 主表格区域 -->
             <div class="bg-white p-6 rounded-lg shadow-md lg:col-span-3">
                 <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white">
+                    <table class="min-w-full bg-white border border-gray-300">
                         <thead>
-                            <tr class="bg-gray-100 text-gray-700">
-                                <th class="py-3 px-4 text-left">物料编码</th>
-                                <th class="py-3 px-4 text-left">物料类型</th>
-                                <th class="py-3 px-4 text-left">物料名称</th>
-								<th class="py-3 px-4 text-left">物料描述</th>
-								<th class="py-3 px-4 text-left">潮敏等级</th>
-								<th class="py-3 px-4 text-left">返工&维修工具</th>
-								<th class="py-3 px-4 text-left">温度范围</th>
-								<th class="py-3 px-4 text-left">返工&维修次数</th>
-								<th class="py-3 px-4 text-left">特殊要求</th>
-                                <th class="py-3 px-4 text-left">操作人</th>
-								<th class="py-3 px-4 text-left">日期</th>
+                            <tr class="bg-gray-100 text-gray-700 border-b-2 border-gray-400">
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">物料编码</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">物料类型</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">物料名称</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">物料描述</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">潮敏等级</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">返工维修工具</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">温度范围</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">返工维修次数</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">特殊要求</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">操作人</th>
+                                <th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">日期</th>
+								<th class="py-3 px-4 text-left border-r border-gray-300 bg-blue-600 text-white font-semibold">编辑删除</th>
                             </tr>
                         </thead>
-                        <tbody id="dataTable">
+                        <tbody id="dataTable" class="[&>tr]:border-b [&>tr]:border-gray-200">
                             <!-- 数据将通过JS动态加载 -->
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
 
     <!-- 新增/编辑模态框 -->
     <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
