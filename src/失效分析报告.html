@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>失效分析报告</title>
+    <!-- 优化资源加载：使用defer延迟非关键脚本 -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 按需加载脚本，初始只加载必要的 -->
+    <script>
+        // 配置Tailwind自定义主题
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        accent: '#8b5cf6',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .form-focus {
+                @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none;
+            }
+            .transition-all-300 {
+                @apply transition-all duration-300;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-primary">失效分析报告</h1>
+            <p class="text-gray-600">创建专业的失效分析报告文档</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- 左侧控制面板 -->
+            <div class="bg-white p-6 rounded-lg shadow-md content-auto">
+                <h2 class="text-xl font-semibold mb-4 text-primary">操作面板</h2>
+                
+                <div class="space-y-4">
+                    <!-- Word导入 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">导入Word文档</label>
+                        <input type="file" id="wordImport" accept=".docx" class="hidden">
+                        <button onclick="document.getElementById('wordImport').click()" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-file-word mr-2"></i>选择Word文件
+                        </button>
+                    </div>
+
+                    <!-- 图片上传 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">上传图片</label>
+                        <input type="file" id="imageUpload" accept="image/*" multiple class="hidden">
+                        <button onclick="document.getElementById('imageUpload').click()" 
+                                class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-image mr-2"></i>上传图片
+                        </button>
+                    </div>
+
+                    <!-- 导出Word -->
+                    <div class="mb-4">
+                        <button id="exportWord" 
+                                class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-file-export mr-2"></i>导出Word文档
+                        </button>
+                    </div>
+
+                    <!-- 重置数据 -->
+                    <div class="mb-4">
+                        <button id="resetData" 
+                                class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded flex items-center justify-center">
+                            <i class="fas fa-trash-alt mr-2"></i>重置所有数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中间报告编辑区 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-6 rounded-lg shadow-md h-full">
+                    <div id="reportEditor" class="min-h-[600px] p-4 border border-gray-200 rounded">
+                        <h2 class="text-2xl font-bold mb-4 text-center">《失效分析报告》</h2>
+                        <div class="space-y-6">
+                            <!-- 基本信息 -->
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">基本信息</h2>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">报告标题</label>
+                                    <input type="text" id="reportTitle" class="w-full p-2 border border-gray-300 rounded form-focus" placeholder="输入报告标题">
+                                </div>
+                                <form id="reportForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">客户代码</label>
+                                            <input type="text" id="customerCode" class="w-full p-2 border rounded form-focus" placeholder="输入客户代码">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">接收日期</label>
+                                            <input type="date" id="receiveDate" class="w-full p-2 border rounded form-focus">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">产品型号</label>
+                                            <input type="text" id="productModel" class="w-full p-2 border rounded form-focus" placeholder="输入产品型号">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">产品编码</label>
+                                            <input type="text" id="productCode" class="w-full p-2 border rounded form-focus" placeholder="输入产品编码">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">工单总套数</label>
+                                            <input type="text" id="totalQuantity" class="w-full p-2 border rounded form-focus" placeholder="输入工单总套数">
+                                        </div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">不良品数量</label>
+                                            <input type="text" id="defectiveQuantity" class="w-full p-2 border rounded form-focus" placeholder="输入不良品数量">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">批次</label>
+                                            <input type="text" id="batchNumber" class="w-full p-2 border rounded form-focus" placeholder="输入批次号">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">工单失效率</label>
+                                            <input type="text" id="failureRate" class="w-full p-2 border rounded form-focus" placeholder="输入工单失效率">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">分析负责人</label>
+                                            <input type="text" id="analyst" class="w-full p-2 border rounded form-focus" placeholder="输入分析人">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">责任部门</label>
+                                            <input type="text" id="responsibleDept" class="w-full p-2 border rounded form-focus" placeholder="输入责任部门">
+                                        </div>
+                                    </div>
+                                    <div class="md:col-span-1">
+                                        <label class="block text-sm font-medium text-gray-700">要求回复日期</label>
+                                        <input type="date" id="requiredReplyDate" class="w-full p-2 border rounded form-focus">
+                                    </div>
+                                    <div class="md:col-span-1">
+                                        <label class="block text-sm font-medium text-gray-700">实际回复日期</label>
+                                        <input type="date" id="actualReplyDate" class="w-full p-2 border rounded form-focus">
+                                    </div>
+                                </form>
+                            </div>
+                            
+                            <!-- 小组成员 -->
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">小组成员</h2>
+                                <div id="teamMembers">
+                                    <!-- 第一行成员 -->
+                                    <div class="flex space-x-4 mb-4">
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium text-gray-700">姓名1</label>
+                                            <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入姓名1">
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium text-gray-700">部门1</label>
+                                            <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入部门1">
+                                        </div>
+                                    </div>
+                                    <!-- 第二行成员 -->
+                                    <div class="flex space-x-4 mb-4">
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium text-gray-700">姓名2</label>
+                                            <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入姓名2">
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium text-gray-700">部门2</label>
+                                            <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入部门2">
+                                        </div>
+                                    </div>
+                                    <!-- 第三行成员 -->
+                                    <div class="flex space-x-4">
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium text-gray-700">姓名3</label>
+                                            <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入姓名3">
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium text-gray-700">部门3</label>
+                                            <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入部门3">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 问题背景部分 -->
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">1.0 Issue Background（问题背景）</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">When（时间）</label>
+                                        <input type="datetime-local" name="issueTime" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm form-focus">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Which（物料号）</label>
+                                        <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入物料号">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Who（客户）</label>
+                                        <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入客户">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Where（地点）</label>
+                                        <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入失效地点">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700">What（现象）</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入故障现象" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">QTY（缺陷数量）</label>
+                                        <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入缺陷数量">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">NG SN</label>
+                                        <input type="text" class="w-full p-2 border rounded form-focus mb-2" placeholder="输入SN">
+                                        <input type="text" class="w-full p-2 border rounded form-focus mb-2" placeholder="输入SN">
+                                        <input type="text" class="w-full p-2 border rounded form-focus" placeholder="输入SN">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 目视检查 -->
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">2.0 Visual inspection（目视检查）</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">无损排查</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入无损排查结果" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">相关佐证</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入相关佐证或记录" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">无损分析</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入无损分析结果" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 功能分析 -->
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">3.0 Function Analysis（功能分析）</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">在线单点测量结果</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入在线单点测量结果" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">在线链路测量结果</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入在线链路测量结果" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">单体单点测量结果</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入单体单点测量结果" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">周边相关部门建议</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入周边相关部门建议" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">客户建议</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入客户建议" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">初步分析结论</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入初步分析结论" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 根本原因/结果 -->
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">4.0 Root cause / FA result（根本原因/结果）</h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">根本原因</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入根本原因" rows="3"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">结果</label>
+                                        <textarea class="w-full p-2 border border-gray-300 rounded-md form-focus" placeholder="输入结果" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700">是否送第三方检测</label>
+                                    <div class="mt-2">
+                                        <label class="inline-flex items-center mr-4">
+                                            <input type="radio" class="form-radio h-4 w-4 text-blue-600" name="thirdPartyTest" value="yes">
+                                            <span class="ml-2">是</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" class="form-radio h-4 w-4 text-blue-600" name="thirdPartyTest" value="no" checked>
+                                            <span class="ml-2">否</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 图片预览区域 -->
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-700 mb-4">图片证据</h2>
+                                <div id="imageGallery" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <!-- 图片将动态添加到这里 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 动态加载所需脚本
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        // 图片上传处理 - 使用事件委托优化
+        document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
+        
+        function handleImageUpload(e) {
+            const files = e.target.files;
+            const gallery = document.getElementById('imageGallery');
+            
+            if (!files || files.length === 0) return;
+            
+            // 限制一次上传的图片数量
+            const maxFiles = 10;
+            const filesToProcess = Array.from(files).slice(0, maxFiles);
+            
+            filesToProcess.forEach(file => {
+                if (!file.type.match('image.*')) return;
+                
+                // 创建缩略图前先显示加载状态
+                const loadingPlaceholder = createLoadingPlaceholder();
+                gallery.appendChild(loadingPlaceholder);
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 移除加载占位符
+                    loadingPlaceholder.remove();
+                    
+                    // 创建图片元素
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'relative group bg-gray-100 rounded overflow-hidden';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-full h-48 object-cover transition-all duration-300 hover:scale-105';
+                    img.alt = '失效分析图片证据';
+                    img.loading = 'lazy'; // 延迟加载图片
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity';
+                    deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    deleteBtn.onclick = function() {
+                        imgContainer.remove();
+                    };
+                    
+                    imgContainer.appendChild(img);
+                    imgContainer.appendChild(deleteBtn);
+                    gallery.appendChild(imgContainer);
+                };
+                
+                reader.onerror = function() {
+                    loadingPlaceholder.remove();
+                    alert('图片加载失败');
+                };
+                
+                reader.readAsDataURL(file);
+            });
+            
+            // 重置input值，允许重复选择同一文件
+            e.target.value = '';
+        }
+        
+        // 创建加载占位符
+        function createLoadingPlaceholder() {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'relative bg-gray-100 rounded overflow-hidden';
+            placeholder.innerHTML = `
+                <div class="w-full h-48 flex items-center justify-center">
+                    <i class="fas fa-circle-notch fa-spin text-gray-400 text-2xl"></i>
+                </div>
+            `;
+            return placeholder;
+        }
+
+        // Word导入处理 - 懒加载mammoth库
+        document.getElementById('wordImport').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            try {
+                // 显示加载状态
+                showLoading('正在导入Word文档...');
+                
+                // 动态加载mammoth库
+                await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.0/mammoth.browser.min.js');
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const arrayBuffer = event.target.result;
+                    
+                    mammoth.extractRawText({arrayBuffer: arrayBuffer})
+                        .then(function(result) {
+                            hideLoading();
+                            const text = result.value;
+                            // 将内容放入第一个文本区域
+                            document.querySelector('textarea').value = text;
+                        })
+                        .catch(function(error) {
+                            hideLoading();
+                            alert('Word文档导入失败: ' + error.message);
+                        });
+                };
+                reader.readAsArrayBuffer(file);
+            } catch (error) {
+                hideLoading();
+                alert('加载Word处理库失败: ' + error.message);
+            }
+            
+            // 重置input值
+            e.target.value = '';
+        });
+
+        // 导出文档处理 - 懒加载所需库
+        document.getElementById('exportWord').addEventListener('click', async function() {
+            try {
+                showLoading('正在准备导出文档...');
+                
+                // 动态加载所需库
+                await Promise.all([
+                    loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
+                    loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+                ]);
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('p', 'mm', 'a4');
+                const editor = document.getElementById('reportEditor');
+                
+                // 克隆编辑器内容以避免影响原始内容
+                const clone = editor.cloneNode(true);
+                clone.style.width = editor.offsetWidth + 'px';
+                clone.style.height = 'auto';
+                document.body.appendChild(clone);
+                
+                // 使用html2canvas生成PDF
+                html2canvas(clone, {
+                    scale: 2, // 提高清晰度
+                    useCORS: true,
+                    logging: false
+                }).then(canvas => {
+                    document.body.removeChild(clone);
+                    
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgWidth = 210; // A4宽度(mm)
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    
+                    // 处理长文档分页
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    const pageHeight = 295; // A4高度(mm)
+                    
+                    while (heightLeft > 0) {
+                        doc.addImage(imgData, 'PNG', 0, position, imgWidth, Math.min(heightLeft, pageHeight));
+                        heightLeft -= pageHeight;
+                        position -= pageHeight;
+                        
+                        if (heightLeft > 0) {
+                            doc.addPage();
+                        }
+                    }
+                    
+                    doc.save('失效分析报告.pdf');
+                    hideLoading();
+                }).catch(error => {
+                    document.body.removeChild(clone);
+                    hideLoading();
+                    alert('导出失败: ' + error.message);
+                });
+            } catch (error) {
+                hideLoading();
+                alert('加载导出工具失败: ' + error.message);
+            }
+        });
+
+        // 重置数据
+        document.getElementById('resetData').addEventListener('click', function() {
+            if (confirm('确定要重置所有数据吗？此操作不可撤销。')) {
+                // 清空所有输入框
+                document.querySelectorAll('input, textarea').forEach(el => {
+                    el.value = '';
+                });
+                
+                // 清空图片 gallery
+                document.getElementById('imageGallery').innerHTML = '';
+                
+                // 重置单选按钮
+                document.querySelector('input[name="thirdPartyTest"][value="no"]').checked = true;
+            }
+        });
+
+        // 加载状态管理
+        function showLoading(message) {
+            // 检查是否已有加载层
+            if (document.getElementById('loadingOverlay')) return;
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            overlay.innerHTML = `
+                <div class="bg-white p-6 rounded-lg shadow-xl flex items-center">
+                    <i class="fas fa-circle-notch fa-spin text-blue-500 text-2xl mr-4"></i>
+                    <span>${message || '处理中...'}</span>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // 自动调整文本框高度
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName === 'TEXTAREA') {
+                e.target.style.height = 'auto';
+                e.target.style.height = (e.target.scrollHeight) + 'px';
+            }
+        });
+    </script>
+</body>
+</html>
