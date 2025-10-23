@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>不良品板管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            secondary: '#36CFC9',
+            danger: '#F53F3F',
+            warning: '#FF7D00',
+            success: '#00B42A',
+            dark: '#1D2129',
+            'gray-light': '#F2F3F5'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .card-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+      .transition-all-300 {
+        transition: all 300ms ease-in-out;
+      }
+      .nav-active {
+        @apply bg-primary/10 text-primary border-l-4 border-primary;
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark min-h-screen flex flex-col">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-database text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold text-primary">不良品板管理系统</h1>
+      </div>
+      
+      <div class="flex items-center space-x-6">
+        <button id="export-all-btn" class="text-primary hover:text-primary/80 transition-all-300 flex items-center">
+          <i class="fa fa-download mr-1"></i>
+          <span>导出全部数据</span>
+        </button>
+        <div class="relative">
+          <img src="https://picsum.photos/id/1005/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover border-2 border-primary/20">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <div class="flex flex-1 overflow-hidden">
+    <!-- 侧边栏导航 -->
+    <aside class="w-64 bg-white shadow-sm border-r border-gray-200 flex-shrink-0 hidden md:block">
+      <nav class="py-4">
+        <ul>
+          <li>
+            <a href="#dashboard" class="nav-active flex items-center px-6 py-3 text-sm font-medium">
+              <i class="fa fa-tachometer mr-3 w-5 text-center"></i>
+              <span>数据概览</span>
+            </a>
+          </li>
+          <li>
+            <a href="#manual-entry" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all-300">
+              <i class="fa fa-keyboard-o mr-3 w-5 text-center"></i>
+              <span>手动录入</span>
+            </a>
+          </li>
+          <li>
+            <a href="#batch-import" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all-300">
+              <i class="fa fa-file-excel-o mr-3 w-5 text-center"></i>
+              <span>批量导入</span>
+            </a>
+          </li>
+          <li>
+            <a href="#data-list" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all-300">
+              <i class="fa fa-list-alt mr-3 w-5 text-center"></i>
+              <span>数据列表</span>
+            </a>
+          </li>
+          <li>
+            <a href="#statistics" class="flex items-center px-6 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all-300">
+              <i class="fa fa-bar-chart mr-3 w-5 text-center"></i>
+              <span>统计分析</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
+      <!-- 数据概览卡片 -->
+      <section id="dashboard" class="mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-lg p-5 card-shadow hover:shadow-lg transition-all-300">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">今日不良品总数</p>
+                <h3 class="text-2xl font-bold mt-1" id="today-total">0</h3>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-danger/10 flex items-center justify-center">
+                <i class="fa fa-exclamation-triangle text-danger"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-danger flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i>%
+              </span>
+              <span class="text-gray-500 ml-2">较昨日</span>
+            </div>
+          </div>
+          
+          <div class="bg-white rounded-lg p-5 card-shadow hover:shadow-lg transition-all-300">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">本周不良品总数</p>
+                <h3 class="text-2xl font-bold mt-1" id="week-total">0</h3>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center">
+                <i class="fa fa-calendar-week-o text-warning"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-success flex items-center">
+                <i class="fa fa-arrow-down mr-1"></i>%
+              </span>
+              <span class="text-gray-500 ml-2">较上周</span>
+            </div>
+          </div>
+          
+          <div class="bg-white rounded-lg p-5 card-shadow hover:shadow-lg transition-all-300">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">本月不良品总数</p>
+                <h3 class="text-2xl font-bold mt-1" id="month-total">0</h3>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <i class="fa fa-calendar text-primary"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-danger flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i>%
+              </span>
+              <span class="text-gray-500 ml-2">较上月</span>
+            </div>
+          </div>
+          
+          <div class="bg-white rounded-lg p-5 card-shadow hover:shadow-lg transition-all-300">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-gray-500 text-sm">累计不良品总数</p>
+                <h3 class="text-2xl font-bold mt-1" id="total-all">0</h3>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
+                <i class="fa fa-database text-secondary"></i>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+              <span class="text-primary flex items-center">
+                <i class="fa fa-refresh mr-1"></i>实时更新
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 近期趋势图 -->
+        <div class="bg-white rounded-lg p-5 card-shadow mb-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold">近期不良品趋势</h2>
+            <div class="flex space-x-2">
+              <button class="period-btn active px-3 py-1 text-sm bg-primary text-white rounded" data-period="day">日</button>
+              <button class="period-btn px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded transition-all-300" data-period="week">周</button>
+              <button class="period-btn px-3 py-1 text-sm bg-gray-200 hover:bg-gray-300 rounded transition-all-300" data-period="month">月</button>
+            </div>
+          </div>
+          <div class="h-80">
+            <canvas id="trend-chart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- 手动录入区域 -->
+      <section id="manual-entry" class="mb-6 bg-white rounded-lg p-5 card-shadow">
+        <h2 class="text-lg font-semibold mb-4">手动录入不良品信息</h2>
+        <form id="manual-entry-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="product-code">产品档案号 <span class="text-danger">*</span></label>
+            <input type="text" id="product-code" name="productCode" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="product-name">产品编码 <span class="text-danger">*</span></label>
+            <input type="text" id="product-name" name="productName" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+		  
+		  <div>
+		    <label class="block text-sm font-medium text-gray-700 mb-1" for="product-name">条码 <span class="text-danger">*</span></label>
+		    <input type="text" id="product-name" name="productName" required
+		          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+		  </div>
+		  
+		  <div>
+		    <label class="block text-sm font-medium text-gray-700 mb-1" for="product-name">任务令 <span class="text-danger">*</span></label>
+		    <input type="text" id="product-name" name="productName" required
+		          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+		  </div>
+		  
+		  <div>
+		    <label class="block text-sm font-medium text-gray-700 mb-1" for="product-name">工单号 <span class="text-danger">*</span></label>
+		    <input type="text" id="product-name" name="productName" required
+		          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+		  </div>
+		  
+		  <div>
+		    <label class="block text-sm font-medium text-gray-700 mb-1" for="product-name">工站名称 <span class="text-danger">*</span></label>
+		    <input type="text" id="product-name" name="productName" required
+		          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+		  </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="defect-type">不良类型 <span class="text-danger">*</span></label>
+            <select id="defect-type" name="defectType" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+              <option value="">请选择不良类型</option>
+              <option value="表面划伤">外观不良</option>
+              <option value="尺寸不符">电性能不良</option>
+              <option value="变形">批量返工</option>
+              <option value="色差">RMA/RO</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="quantity">数量 <span class="text-danger">*</span></label>
+            <input type="number" id="quantity" name="quantity" min="1" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="production-date">检测日期 <span class="text-danger">*</span></label>
+            <input type="date" id="production-date" name="productionDate" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="discovery-date">维修日期 <span class="text-danger">*</span></label>
+            <input type="date" id="discovery-date" name="discoveryDate" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+
+          
+          <div class="md:col-span-2 lg:col-span-3">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="remark">备注说明</label>
+            <textarea id="remark" name="remark" rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300"></textarea>
+          </div>
+          
+          <div class="md:col-span-2 lg:col-span-3 flex justify-end">
+            <button type="reset" class="px-4 py-2 border border-gray-300 rounded-md mr-3 hover:bg-gray-50 transition-all-300">
+              重置
+            </button>
+            <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">
+              保存数据
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- 批量导入区域 -->
+      <section id="batch-import" class="mb-6 bg-white rounded-lg p-5 card-shadow">
+        <h2 class="text-lg font-semibold mb-4">批量导入数据</h2>
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-all-300" id="drop-area">
+          <i class="fa fa-file-excel-o text-4xl text-gray-400 mb-3"></i>
+          <p class="mb-2">拖拽Excel文件到此处或 <span class="text-primary cursor-pointer">点击上传</span></p>
+          <p class="text-sm text-gray-500">支持 .xlsx, .xls 格式文件</p>
+          <input type="file" id="file-upload" accept=".xlsx, .xls" class="hidden">
+          <button id="download-template" class="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all-300">
+            <i class="fa fa-download mr-1"></i> 下载导入模板
+          </button>
+        </div>
+        <div id="import-progress" class="mt-4 hidden">
+          <div class="flex justify-between mb-1">
+            <span class="text-sm text-gray-600">正在导入...</span>
+            <span class="text-sm text-gray-600" id="progress-percent">0%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div id="progress-bar" class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 数据列表 -->
+      <section id="data-list" class="mb-6 bg-white rounded-lg p-5 card-shadow">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold">不良品数据列表</h2>
+          <div class="flex items-center">
+            <div class="relative mr-3">
+              <input type="text" id="search-input" placeholder="搜索产品编码/名称"
+                    class="pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+              <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <button id="export-table-btn" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-all-300">
+              <i class="fa fa-download mr-1"></i> 导出数据
+            </button>
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">产品编码</th>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">产品名称</th>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">不良类型</th>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">生产日期</th>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">发现日期</th>
+                <th class="px-4 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              </tr>
+            </thead>
+            <tbody id="data-table-body" class="bg-white divide-y divide-gray-200">
+              <!-- 数据行会通过JavaScript动态生成 -->
+              <tr class="text-center">
+                <td colspan="8" class="px-4 py-8 text-gray-500">暂无数据</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="flex justify-between items-center mt-4">
+          <div class="text-sm text-gray-500">显示 0 条，共 0 条</div>
+          <div class="flex space-x-1">
+            <button class="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              <i class="fa fa-chevron-left"></i>
+            </button>
+            <button class="px-3 py-1 border border-gray-300 rounded-md bg-primary text-white">1</button>
+            <button class="px-3 py-1 border border-gray-300 rounded-md bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              <i class="fa fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 统计分析 -->
+      <section id="statistics" class="mb-6 bg-white rounded-lg p-5 card-shadow">
+        <h2 class="text-lg font-semibold mb-4">统计分析</h2>
+        
+        <div class="flex flex-wrap items-center gap-4 mb-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">时间维度</label>
+            <select id="statistics-period"
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+              <option value="day">按天</option>
+              <option value="week">按周</option>
+              <option value="month">按月</option>
+              <option value="quarter">按季度</option>
+              <option value="year">按年</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
+            <input type="date" id="start-date"
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
+            <input type="date" id="end-date"
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div class="self-end">
+            <button id="refresh-statistics" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">
+              <i class="fa fa-refresh mr-1"></i> 刷新统计
+            </button>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div>
+            <h3 class="text-base font-medium mb-3">不良品数量趋势</h3>
+            <div class="h-72">
+              <canvas id="quantity-trend-chart"></canvas>
+            </div>
+          </div>
+          
+          <div>
+            <h3 class="text-base font-medium mb-3">不良类型分布</h3>
+            <div class="h-72">
+              <canvas id="defect-type-chart"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-base font-medium mb-3">产品不良率统计</h3>
+          <div class="h-72">
+            <canvas id="defect-rate-chart"></canvas>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 底部 -->
+  <footer class="bg-white border-t border-gray-200 py-4">
+    <div class="container mx-auto px-4 text-center text-sm text-gray-500">
+      <p>不良品板管理系统 &copy; 2023 版权所有</p>
+    </div>
+  </footer>
+
+  <!-- 编辑数据模态框 -->
+  <div id="edit-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div class="p-5 border-b border-gray-200 flex justify-between items-center">
+        <h3 class="text-lg font-semibold">编辑不良品信息</h3>
+        <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <div class="p-5">
+        <form id="edit-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="hidden" id="edit-id">
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="edit-product-code">产品编码 <span class="text-danger">*</span></label>
+            <input type="text" id="edit-product-code" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="edit-product-name">产品名称 <span class="text-danger">*</span></label>
+            <input type="text" id="edit-product-name" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="edit-defect-type">不良类型 <span class="text-danger">*</span></label>
+            <select id="edit-defect-type" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+              <option value="">请选择不良类型</option>
+              <option value="表面划伤">外观不良</option>
+              <option value="尺寸不符">电性能不良</option>
+              <option value="变形">批量返工</option>
+              <option value="色差">RMA/RO</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="edit-quantity">数量 <span class="text-danger">*</span></label>
+            <input type="number" id="edit-quantity" min="1" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="edit-production-date">生产日期 <span class="text-danger">*</span></label>
+            <input type="date" id="edit-production-date" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="edit-discovery-date">发现日期 <span class="text-danger">*</span></label>
+            <input type="date" id="edit-discovery-date" required
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300">
+          </div>
+          
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1" for="edit-remark">备注说明</label>
+            <textarea id="edit-remark" rows="3"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all-300"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="p-5 border-t border-gray-200 flex justify-end">
+        <button id="cancel-edit" class="px-4 py-2 border border-gray-300 rounded-md mr-3 hover:bg-gray-50 transition-all-300">
+          取消
+        </button>
+        <button id="save-edit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all-300">
+          保存修改
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认删除模态框 -->
+  <div id="delete-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg w-full max-w-md">
+      <div class="p-5 border-b border-gray-200">
+        <h3 class="text-lg font-semibold">确认删除</h3>
+      </div>
+      <div class="p-5">
+        <p class="text-gray-600">您确定要删除这条数据吗？此操作不可撤销。</p>
+        <input type="hidden" id="delete-id">
+      </div>
+      <div class="p-5 border-t border-gray-200 flex justify-end">
+        <button id="cancel-delete" class="px-4 py-2 border border-gray-300 rounded-md mr-3 hover:bg-gray-50 transition-all-300">
+          取消
+        </button>
+        <button id="confirm-delete" class="px-4 py-2 bg-danger text-white rounded-md hover:bg-danger/90 transition-all-300">
+          确认删除
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通知提示 -->
+  <div id="toast" class="fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg transform translate-x-full transition-all-300 flex items-center">
+    <i id="toast-icon" class="mr-2"></i>
+    <span id="toast-message"></span>
+  </div>
+
+  <script>
+    // 数据存储
+    let defectData = JSON.parse(localStorage.getItem('defectData')) || [];
+    let currentId = defectData.length > 0 ? Math.max(...defectData.map(item => item.id)) + 1 : 1;
+    
+    // 初始化日期选择器
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('production-date').value = today;
+      document.getElementById('discovery-date').value = today;
+      document.getElementById('start-date').value = new Date(new Date().setMonth(new Date().getMonth() - 6)).toISOString().split('T')[0];
+      document.getElementById('end-date').value = today;
+      
+      // 初始化图表
+      initCharts();
+      
+      // 加载数据
+      renderDataTable();
+      updateStatistics();
+      
+      // 绑定事件
+      bindEvents();
+    });
+    
+    // 初始化图表
+    let trendChart, quantityTrendChart, defectTypeChart, defectRateChart;
+    
+    function initCharts() {
+      // 近期趋势图
+      const trendCtx = document.getElementById('trend-chart').getContext('2d');
+      trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '不良品数量',
+            data: [],
+            borderColor: '#165DFF',
+            backgroundColor: 'rgba(22, 93, 255, 0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+      
+      // 数量趋势图
+      const quantityTrendCtx = document.getElementById('quantity-trend-chart').getContext('2d');
+      quantityTrendChart = new Chart(quantityTrendCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '不良品数量',
+            data: [],
+            backgroundColor: '#165DFF'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+      
+      // 不良类型分布图
+      const defectTypeCtx = document.getElementById('defect-type-chart').getContext('2d');
+      defectTypeChart = new Chart(defectTypeCtx, {
+        type: 'doughnut',
+        data: {
+          labels: [],
+          datasets: [{
+            data: [],
+            backgroundColor: [
+              '#165DFF', '#36CFC9', '#F53F3F', 
+              '#FF7D00', '#00B42A', '#722ED1'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right'
+            }
+          },
+          cutout: '60%'
+        }
+      });
+      
+      // 产品不良率统计图
+      const defectRateCtx = document.getElementById('defect-rate-chart').getContext('2d');
+      defectRateChart = new Chart(defectRateCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '不良品数量',
+            data: [],
+            backgroundColor: '#165DFF',
+            yAxisID: 'y'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // 绑定事件
+    function bindEvents() {
+      // 手动录入表单提交
+      document.getElementById('manual-entry-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveManualEntry();
+      });
+      
+      // 文件上传区域
+      const dropArea = document.getElementById('drop-area');
+      const fileUpload = document.getElementById('file-upload');
+      
+      dropArea.addEventListener('click', () => fileUpload.click());
+      
+      fileUpload.addEventListener('change', handleFileUpload);
+      
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        dropArea.classList.add('border-primary');
+        dropArea.classList.add('bg-primary/5');
+      }
+      
+      function unhighlight() {
+        dropArea.classList.remove('border-primary');
+        dropArea.classList.remove('bg-primary/5');
+      }
+      
+      dropArea.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) {
+          handleFiles(files);
+        }
+      }
+      
+      // 下载模板
+      document.getElementById('download-template').addEventListener('click', downloadTemplate);
+      
+      // 导出全部数据
+      document.getElementById('export-all-btn').addEventListener('click', exportAllData);
+      
+      // 导出表格数据
+      document.getElementById('export-table-btn').addEventListener('click', exportTableData);
+      
+      // 搜索功能
+      document.getElementById('search-input').addEventListener('input', debounce(function() {
+        renderDataTable(this.value);
+      }, 300));
+      
+      // 刷新统计
+      document.getElementById('refresh-statistics').addEventListener('click', updateStatistics);
+      
+      // 时间维度切换
+      document.getElementById('statistics-period').addEventListener('change', updateStatistics);
+      
+      // 近期趋势图周期切换
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.period-btn').forEach(b => {
+            b.classList.remove('active', 'bg-primary', 'text-white');
+            b.classList.add('bg-gray-200', 'hover:bg-gray-300');
+          });
+          
+          this.classList.add('active', 'bg-primary', 'text-white');
+          this.classList.remove('bg-gray-200', 'hover:bg-gray-300');
+          
+          updateTrendChart(this.dataset.period);
+        });
+      });
+      
+      // 编辑模态框
+      document.getElementById('close-modal').addEventListener('click', () => {
+        document.getElementById('edit-modal').classList.add('hidden');
+      });
+      
+      document.getElementById('cancel-edit').addEventListener('click', () => {
+        document.getElementById('edit-modal').classList.add('hidden');
+      });
+      
+      document.getElementById('save-edit').addEventListener('click', saveEdit);
+      
+      // 删除模态框
+      document.getElementById('cancel-delete').addEventListener('click', () => {
+        document.getElementById('delete-modal').classList.add('hidden');
+      });
+      
+      document.getElementById('confirm-delete').addEventListener('click', confirmDelete);
+      
+      // 导航栏点击
+      document.querySelectorAll('nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          
+          // 更新导航样式
+          document.querySelectorAll('nav a').forEach(a => {
+            a.classList.remove('nav-active');
+            a.classList.add('text-gray-600', 'hover:bg-gray-50');
+          });
+          
+          this.classList.add('nav-active');
+          this.classList.remove('text-gray-600', 'hover:bg-gray-50');
+          
+          // 滚动到对应区域
+          const targetId = this.getAttribute('href').substring(1);
+          document.getElementById(targetId).scrollIntoView({
+            behavior: 'smooth'
+          });
+        });
+      });
+    }
+    
+    // 保存手动录入数据
+    function saveManualEntry() {
+      const newEntry = {
+        id: currentId++,
+        productCode: document.getElementById('product-code').value,
+        productName: document.getElementById('product-name').value,
+        defectType: document.getElementById('defect-type').value,
+        quantity: parseInt(document.getElementById('quantity').value),
+        productionDate: document.getElementById('production-date').value,
+        discoveryDate: document.getElementById('discovery-date').value,
+        remark: document.getElementById('remark').value,
+        createdAt: new Date().toISOString()
+      };
+      
+      defectData.unshift(newEntry);
+      saveDataToLocalStorage();
+      
+      // 重置表单
+      document.getElementById('manual-entry-form').reset();
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('production-date').value = today;
+      document.getElementById('discovery-date').value = today;
+      
+      // 更新UI
+      renderDataTable();
+      updateStatistics();
+      showToast('success', '数据保存成功');
+    }
+    
+    // 处理文件上传
+    function handleFileUpload(e) {
+      const files = e.target.files;
+      if (files.length) {
+        handleFiles(files);
+      }
+    }
+    
+    // 处理上传的文件
+    function handleFiles(files) {
+      const file = files[0];
+      if (!file.name.match(/\.(xlsx|xls)$/)) {
+        showToast('error', '请上传Excel格式的文件');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // 获取第一个工作表
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          // 转换为JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          
+          if (jsonData.length === 0) {
+            showToast('warning', '文件中没有数据');
+            return;
+          }
+          
+          // 显示进度条
+          const importProgress = document.getElementById('import-progress');
+          const progressBar = document.getElementById('progress-bar');
+          const progressPercent = document.getElementById('progress-percent');
+          
+          importProgress.classList.remove('hidden');
+          progressBar.style.width = '0%';
+          progressPercent.textContent = '0%';
+          
+          // 模拟导入进度
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 10;
+            progressBar.style.width = `${progress}%`;
+            progressPercent.textContent = `${progress}%`;
+            
+            if (progress >= 100) {
+              clearInterval(interval);
+              
+              // 处理导入的数据
+              processImportedData(jsonData);
+              
+              // 隐藏进度条
+              setTimeout(() => {
+                importProgress.classList.add('hidden');
+              }, 500);
+              
+              showToast('success', `成功导入 ${jsonData.length} 条数据`);
+            }
+          }, 100);
+          
+        } catch (error) {
+          console.error('导入失败:', error);
+          showToast('error', '文件解析失败，请检查文件格式');
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    }
+    
+    // 处理导入的数据
+    function processImportedData(importedData) {
+      importedData.forEach(item => {
+        // 映射Excel列到系统字段（根据模板对应）
+        const newItem = {
+          id: currentId++,
+          productCode: item['产品编码'] || '',
+          productName: item['产品名称'] || '',
+          defectType: item['不良类型'] || '',
+          quantity: parseInt(item['数量']) || 1,
+          productionDate: formatDateForInput(item['生产日期']),
+          discoveryDate: formatDateForInput(item['发现日期']) || new Date().toISOString().split('T')[0],
+          remark: item['备注说明'] || '',
+          createdAt: new Date().toISOString()
+        };
+        
+        defectData.unshift(newItem);
+      });
+      
+      saveDataToLocalStorage();
+      renderDataTable();
+      updateStatistics();
+    }
+    
+    // 格式化日期为输入框格式
+    function formatDateForInput(dateValue) {
+      if (!dateValue) return '';
+      
+      // 处理Excel日期（Excel日期是从1900-01-00开始的天数）
+      if (typeof dateValue === 'number') {
+        const excelEpoch = new Date(1900, 0, -1); // Excel起始日期是1900-01-00
+        const date = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+        return date.toISOString().split('T')[0];
+      }
+      
+      // 处理字符串日期
+      if (typeof dateValue === 'string') {
+        // 尝试多种格式解析
+        const parsedDate = new Date(dateValue);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate.toISOString().split('T')[0];
+        }
+      }
+      
+      return '';
+    }
+    
+    // 下载导入模板
+    function downloadTemplate() {
+      const worksheetData = [
+        {
+          '产品编码': '例如: PRD-2023-001',
+          '产品名称': '例如: 电路板A',
+          '不良类型': '例如: 表面划伤',
+          '数量': '例如: 5',
+          '生产日期': '例如: 2023-06-15',
+          '发现日期': '例如: 2023-06-16',
+          '备注说明': '例如: 边缘有划痕'
+        }
+      ];
+      
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, '不良品数据');
+      
+      // 生成并下载文件
+      XLSX.writeFile(workbook, '不良品数据导入模板.xlsx');
+      showToast('success', '模板下载成功');
+    }
+    
+    // 渲染数据表格
+    function renderDataTable(searchTerm = '') {
+      const tableBody = document.getElementById('data-table-body');
+      tableBody.innerHTML = '';
+      
+      // 过滤数据
+      let filteredData = defectData;
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filteredData = defectData.filter(item => 
+          item.productCode.toLowerCase().includes(term) || 
+          item.productName.toLowerCase().includes(term)
+        );
+      }
+      
+      if (filteredData.length === 0) {
+        tableBody.innerHTML = `
+          <tr class="text-center">
+            <td colspan="8" class="px-4 py-8 text-gray-500">暂无数据</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      // 渲染数据行
+      filteredData.forEach(item => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-all-300';
+        row.innerHTML = `
+          <td class="px-4 py-3 whitespace-nowrap">${item.id}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${item.productCode}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${item.productName}</td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            <span class="px-2 py-1 text-xs rounded-full ${getDefectTypeClass(item.defectType)}">
+              ${item.defectType}
+            </span>
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap">${item.quantity}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${formatDate(item.productionDate)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${formatDate(item.discoveryDate)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            <button class="text-primary hover:text-primary/80 mr-3 edit-btn" data-id="${item.id}">
+              <i class="fa fa-pencil"></i>
+            </button>
+            <button class="text-danger hover:text-danger/80 delete-btn" data-id="${item.id}">
+              <i class="fa fa-trash"></i>
+            </button>
+          </td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+      
+      // 绑定编辑和删除按钮事件
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          openEditModal(parseInt(this.dataset.id));
+        });
+      });
+      
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          openDeleteModal(parseInt(this.dataset.id));
+        });
+      });
+      
+      // 更新分页信息
+      document.querySelector('.text-sm.text-gray-500').textContent = 
+        `显示 ${filteredData.length} 条，共 ${defectData.length} 条`;
+    }
+    
+    // 获取不良类型的样式类
+    function getDefectTypeClass(type) {
+      switch(type) {
+        case '外观不良': return 'bg-warning/10 text-warning';
+        case '电性能不良': return 'bg-danger/10 text-danger';
+        case '批量返工': return 'bg-primary/10 text-primary';
+        case 'RMA/RO': return 'bg-secondary/10 text-secondary';
+        default: return 'bg-gray-100 text-gray-700';
+      }
+    }
+    
+    // 打开编辑模态框
+    function openEditModal(id) {
+      const item = defectData.find(d => d.id === id);
+      if (!item) return;
+      
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('edit-product-code').value = item.productCode;
+      document.getElementById('edit-product-name').value = item.productName;
+      document.getElementById('edit-defect-type').value = item.defectType;
+      document.getElementById('edit-quantity').value = item.quantity;
+      document.getElementById('edit-production-date').value = item.productionDate;
+      document.getElementById('edit-discovery-date').value = item.discoveryDate;
+      document.getElementById('edit-remark').value = item.remark;
+      
+      document.getElementById('edit-modal').classList.remove('hidden');
+    }
+    
+    // 保存编辑
+    function saveEdit() {
+      const id = parseInt(document.getElementById('edit-id').value);
+      const index = defectData.findIndex(d => d.id === id);
+      
+      if (index === -1) return;
+      
+      defectData[index] = {
+        ...defectData[index],
+        productCode: document.getElementById('edit-product-code').value,
+        productName: document.getElementById('edit-product-name').value,
+        defectType: document.getElementById('edit-defect-type').value,
+        quantity: parseInt(document.getElementById('edit-quantity').value),
+        productionDate: document.getElementById('edit-production-date').value,
+        discoveryDate: document.getElementById('edit-discovery-date').value,
+        remark: document.getElementById('edit-remark').value
+      };
+      
+      saveDataToLocalStorage();
+      renderDataTable();
+      updateStatistics();
+      
+      document.getElementById('edit-modal').classList.add('hidden');
+      showToast('success', '数据更新成功');
+    }
+    
+    // 打开删除模态框
+    function openDeleteModal(id) {
+      document.getElementById('delete-id').value = id;
+      document.getElementById('delete-modal').classList.remove('hidden');
+    }
+    
+    // 确认删除
+    function confirmDelete() {
+      const id = parseInt(document.getElementById('delete-id').value);
+      defectData = defectData.filter(d => d.id !== id);
+      
+      saveDataToLocalStorage();
+      renderDataTable();
+      updateStatistics();
+      
+      document.getElementById('delete-modal').classList.add('hidden');
+      showToast('success', '数据已删除');
+    }
+    
+    // 更新统计数据
+    function updateStatistics() {
+      updateSummaryCards();
+      updateTrendChart('day'); // 默认按天
+      updateStatisticalCharts();
+    }
+    
+    // 更新概览卡片
+    function updateSummaryCards() {
+      const today = new Date().toISOString().split('T')[0];
+      const todayStart = new Date(today);
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(todayStart.getDate() - todayStart.getDay());
+      
+      const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1);
+      
+      // 今日总数
+      const todayTotal = defectData
+        .filter(item => item.discoveryDate === today)
+        .reduce((sum, item) => sum + item.quantity, 0);
+      
+      // 本周总数
+      const weekTotal = defectData
+        .filter(item => new Date(item.discoveryDate) >= weekStart)
+        .reduce((sum, item) => sum + item.quantity, 0);
+      
+      // 本月总数
+      const monthTotal = defectData
+        .filter(item => new Date(item.discoveryDate) >= monthStart)
+        .reduce((sum, item) => sum + item.quantity, 0);
+      
+      // 累计总数
+      const totalAll = defectData
+        .reduce((sum, item) => sum + item.quantity, 0);
+      
+      // 更新UI
+      document.getElementById('today-total').textContent = todayTotal;
+      document.getElementById('week-total').textContent = weekTotal;
+      document.getElementById('month-total').textContent = monthTotal;
+      document.getElementById('total-all').textContent = totalAll;
+    }
+    
+    // 更新趋势图
+    function updateTrendChart(period) {
+      const today = new Date();
+      let labels = [];
+      let data = [];
+      
+      // 根据周期生成标签和数据
+      if (period === 'day') {
+        // 过去7天
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(today.getDate() - i);
+          const dateStr = date.toISOString().split('T')[0];
+          
+          labels.push(formatDate(dateStr, true));
+          
+          const dayTotal = defectData
+            .filter(item => item.discoveryDate === dateStr)
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          data.push(dayTotal);
+        }
+      } else if (period === 'week') {
+        // 过去6周
+        for (let i = 5; i >= 0; i--) {
+          const weekStart = new Date(today);
+          weekStart.setDate(today.getDate() - today.getDay() - i * 7);
+          const weekEnd = new Date(weekStart);
+          weekEnd.setDate(weekStart.getDate() + 6);
+          
+          const label = `第${getWeekNumber(weekStart)}周`;
+          labels.push(label);
+          
+          const weekTotal = defectData
+            .filter(item => {
+              const itemDate = new Date(item.discoveryDate);
+              return itemDate >= weekStart && itemDate <= weekEnd;
+            })
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          data.push(weekTotal);
+        }
+      } else if (period === 'month') {
+        // 过去6个月
+        for (let i = 5; i >= 0; i--) {
+          const month = new Date(today);
+          month.setMonth(today.getMonth() - i);
+          
+          const label = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+          labels.push(label);
+          
+          const monthTotal = defectData
+            .filter(item => {
+              const itemDate = new Date(item.discoveryDate);
+              return itemDate.getFullYear() === month.getFullYear() && 
+                     itemDate.getMonth() === month.getMonth();
+            })
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          data.push(monthTotal);
+        }
+      }
+      
+      // 更新图表
+      trendChart.data.labels = labels;
+      trendChart.data.datasets[0].data = data;
+      trendChart.update();
+    }
+    
+    // 更新统计图表
+    function updateStatisticalCharts() {
+      const period = document.getElementById('statistics-period').value;
+      const startDate = document.getElementById('start-date').value;
+      const endDate = document.getElementById('end-date').value;
+      
+      // 过滤日期范围内的数据
+      const filteredData = defectData.filter(item => {
+        return item.discoveryDate >= startDate && item.discoveryDate <= endDate;
+      });
+      
+      // 1. 数量趋势图
+      const trendData = getTrendData(filteredData, period, startDate, endDate);
+      quantityTrendChart.data.labels = trendData.labels;
+      quantityTrendChart.data.datasets[0].data = trendData.values;
+      quantityTrendChart.update();
+      
+      // 2. 不良类型分布图
+      const typeData = getDefectTypeData(filteredData);
+      defectTypeChart.data.labels = typeData.types;
+      defectTypeChart.data.datasets[0].data = typeData.values;
+      defectTypeChart.update();
+      
+      // 3. 产品不良率统计图
+      const productData = getProductDefectData(filteredData);
+      defectRateChart.data.labels = productData.products;
+      defectRateChart.data.datasets[0].data = productData.values;
+      defectRateChart.update();
+    }
+    
+    // 获取趋势数据
+    function getTrendData(data, period, startDate, endDate) {
+      const labels = [];
+      const values = [];
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      if (period === 'day') {
+        // 按天
+        const current = new Date(start);
+        while (current <= end) {
+          const dateStr = current.toISOString().split('T')[0];
+          labels.push(formatDate(dateStr, true));
+          
+          const total = data
+            .filter(item => item.discoveryDate === dateStr)
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          values.push(total);
+          
+          current.setDate(current.getDate() + 1);
+        }
+      } else if (period === 'week') {
+        // 按周
+        const current = new Date(start);
+        // 调整到本周的第一天（周一）
+        current.setDate(current.getDate() - (current.getDay() || 7) + 1);
+        
+        while (current <= end) {
+          const weekEnd = new Date(current);
+          weekEnd.setDate(current.getDate() + 6);
+          
+          if (weekEnd > end) weekEnd.setTime(end.getTime());
+          
+          const label = `第${getWeekNumber(current)}周`;
+          labels.push(label);
+          
+          const total = data
+            .filter(item => {
+              const itemDate = new Date(item.discoveryDate);
+              return itemDate >= current && itemDate <= weekEnd;
+            })
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          values.push(total);
+          
+          current.setDate(current.getDate() + 7);
+        }
+      } else if (period === 'month') {
+        // 按月
+        const current = new Date(start.getFullYear(), start.getMonth(), 1);
+        
+        while (current <= end) {
+          const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+          const monthEnd = new Date(nextMonth - 1);
+          
+          if (monthEnd > end) monthEnd.setTime(end.getTime());
+          
+          const label = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+          labels.push(label);
+          
+          const total = data
+            .filter(item => {
+              const itemDate = new Date(item.discoveryDate);
+              return itemDate >= current && itemDate <= monthEnd;
+            })
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          values.push(total);
+          
+          current.setMonth(current.getMonth() + 1);
+        }
+      } else if (period === 'quarter') {
+        // 按季度
+        const current = new Date(start.getFullYear(), Math.floor(start.getMonth() / 3) * 3, 1);
+        
+        while (current <= end) {
+          const nextQuarter = new Date(current.getFullYear(), current.getMonth() + 3, 1);
+          const quarterEnd = new Date(nextQuarter - 1);
+          
+          if (quarterEnd > end) quarterEnd.setTime(end.getTime());
+          
+          const quarter = Math.floor(current.getMonth() / 3) + 1;
+          const label = `${current.getFullYear()}-Q${quarter}`;
+          labels.push(label);
+          
+          const total = data
+            .filter(item => {
+              const itemDate = new Date(item.discoveryDate);
+              return itemDate >= current && itemDate <= quarterEnd;
+            })
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          values.push(total);
+          
+          current.setMonth(current.getMonth() + 3);
+        }
+      } else if (period === 'year') {
+        // 按年
+        let currentYear = start.getFullYear();
+        
+        while (currentYear <= end.getFullYear()) {
+          const yearStart = new Date(currentYear, 0, 1);
+          const yearEnd = new Date(currentYear, 11, 31);
+          
+          if (yearStart < start) yearStart.setTime(start.getTime());
+          if (yearEnd > end) yearEnd.setTime(end.getTime());
+          
+          labels.push(currentYear.toString());
+          
+          const total = data
+            .filter(item => {
+              const itemDate = new Date(item.discoveryDate);
+              return itemDate >= yearStart && itemDate <= yearEnd;
+            })
+            .reduce((sum, item) => sum + item.quantity, 0);
+          
+          values.push(total);
+          
+          currentYear++;
+        }
+      }
+      
+      return { labels, values };
+    }
+    
+    // 获取不良类型数据
+    function getDefectTypeData(data) {
+      const typeMap = {};
+      
+      data.forEach(item => {
+        if (!typeMap[item.defectType]) {
+          typeMap[item.defectType] = 0;
+        }
+        typeMap[item.defectType] += item.quantity;
+      });
+      
+      // 转换为数组并排序
+      const typeArray = Object.entries(typeMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 6); // 只显示前6种类型
+      
+      return {
+        types: typeArray.map(item => item[0]),
+        values: typeArray.map(item => item[1])
+      };
+    }
+    
+    // 获取产品不良数据
+    function getProductDefectData(data) {
+      const productMap = {};
+      
+      data.forEach(item => {
+        const key = `${item.productCode}-${item.productName}`;
+        if (!productMap[key]) {
+          productMap[key] = 0;
+        }
+        productMap[key] += item.quantity;
+      });
+      
+      // 转换为数组并排序
+      const productArray = Object.entries(productMap)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10); // 只显示前10种产品
+      
+      return {
+        products: productArray.map(item => item[0].split('-')[1] || item[0]),
+        values: productArray.map(item => item[1])
+      };
+    }
+    
+    // 导出全部数据
+    function exportAllData() {
+      if (defectData.length === 0) {
+        showToast('warning', '没有数据可导出');
+        return;
+      }
+      
+      // 准备导出数据
+      const exportData = defectData.map(item => ({
+        'ID': item.id,
+        '产品编码': item.productCode,
+        '产品名称': item.productName,
+        '不良类型': item.defectType,
+        '数量': item.quantity,
+        '生产日期': formatDate(item.productionDate),
+        '发现日期': formatDate(item.discoveryDate),
+        '备注说明': item.remark,
+        '录入时间': formatDateTime(item.createdAt)
+      }));
+      
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, '不良品数据');
+      
+      // 生成并下载文件
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `不良品数据_${dateStr}.xlsx`);
+      showToast('success', '数据导出成功');
+    }
+    
+    // 导出表格数据
+    function exportTableData() {
+      const searchTerm = document.getElementById('search-input').value;
+      
+      // 过滤数据
+      let filteredData = defectData;
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        filteredData = defectData.filter(item => 
+          item.productCode.toLowerCase().includes(term) || 
+          item.productName.toLowerCase().includes(term)
+        );
+      }
+      
+      if (filteredData.length === 0) {
+        showToast('warning', '当前没有数据可导出');
+        return;
+      }
+      
+      // 准备导出数据
+      const exportData = filteredData.map(item => ({
+        'ID': item.id,
+        '产品编码': item.productCode,
+        '产品名称': item.productName,
+        '不良类型': item.defectType,
+        '数量': item.quantity,
+        '生产日期': formatDate(item.productionDate),
+        '发现日期': formatDate(item.discoveryDate),
+        '备注说明': item.remark
+      }));
+      
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, '不良品数据');
+      
+      // 生成并下载文件
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `不良品数据_筛选_${dateStr}.xlsx`);
+      showToast('success', '表格数据导出成功');
+    }
+    
+    // 保存数据到本地存储
+    function saveDataToLocalStorage() {
+      localStorage.setItem('defectData', JSON.stringify(defectData));
+    }
+    
+    // 显示提示信息
+    function showToast(type, message) {
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toast-icon');
+      const toastMessage = document.getElementById('toast-message');
+      
+      // 设置样式和图标
+      toast.className = 'fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg transform translate-x-full transition-all-300 flex items-center';
+      
+      if (type === 'success') {
+        toast.classList.add('bg-success/10', 'text-success', 'border-l-4', 'border-success');
+        toastIcon.className = 'fa fa-check-circle mr-2';
+      } else if (type === 'error') {
+        toast.classList.add('bg-danger/10', 'text-danger', 'border-l-4', 'border-danger');
+        toastIcon.className = 'fa fa-exclamation-circle mr-2';
+      } else if (type === 'warning') {
+        toast.classList.add('bg-warning/10', 'text-warning', 'border-l-4', 'border-warning');
+        toastIcon.className = 'fa fa-exclamation-triangle mr-2';
+      }
+      
+      // 设置消息
+      toastMessage.textContent = message;
+      
+      // 显示提示
+      setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+        toast.classList.add('translate-x-0');
+      }, 100);
+      
+      // 3秒后隐藏
+      setTimeout(() => {
+        toast.classList.remove('translate-x-0');
+        toast.classList.add('translate-x-full');
+      }, 3000);
+    }
+    
+    // 格式化日期
+    function formatDate(dateStr, short = false) {
+      if (!dateStr) return '';
+      
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return short ? `${month}/${day}` : `${year}-${month}-${day}`;
+    }
+    
+    // 格式化日期时间
+    function formatDateTime(dateTimeStr) {
+      if (!dateTimeStr) return '';
+      
+      const date = new Date(dateTimeStr);
+      if (isNaN(date.getTime())) return dateTimeStr;
+      
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      
+      return `${year}-${month}-${day} ${hours}:${minutes}`;
+    }
+    
+    // 获取周数
+    function getWeekNumber(date) {
+      const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+      const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+      return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+    }
+    
+    // 防抖函数
+    function debounce(func, wait) {
+      let timeout;
+      return function() {
+        const context = this;
+        const args = arguments;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+      };
+    }
+  </script>
+</body>
+</html>
