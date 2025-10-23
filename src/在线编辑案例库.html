@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案例管理系统 - 详细版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- 引入SheetJS用于处理Word导入导出 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .priority-high { border-left: 4px solid #ef4444; }
+        .priority-medium { border-left: 4px solid #f59e0b; }
+        .priority-low { border-left: 4px solid #10b981; }
+        .sidebar {
+            width: 400px;
+            transition: all 0.3s ease;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            object-fit: contain;
+        }
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 350px;
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: fixed;
+                z-index: 40;
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <!-- 移动端菜单按钮 -->
+    <div class="lg:hidden fixed top-4 left-4 z-50">
+        <button id="mobileMenuBtn" class="bg-white text-blue-600 p-3 rounded-lg shadow-lg">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <div class="flex min-h-screen">
+        <!-- 左侧边栏 - 案例列表 -->
+        <div id="sidebar" class="sidebar bg-white shadow-xl">
+            <div class="p-6 h-full flex flex-col">
+                <!-- 边栏头部 -->
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                <i class="fas fa-book-open mr-2"></i>案例列表
+                    </h2>
+                    <button id="newCaseBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                <i class="fas fa-plus mr-1"></i>新建
+            </button>
+                </div>
+
+                <!-- 搜索和筛选区域 -->
+                <div class="space-y-4 mb-6">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="搜索案例..."
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">所有分类</option>
+                            <option value="技术">技术</option>
+                            <option value="业务">业务</option>
+                            <option value="设计">设计</option>
+                            <option value="其他">其他</option>
+                        </select>
+
+                        <select id="priorityFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">所有优先级</option>
+                            <option value="高">高</option>
+                            <option value="中">中</option>
+                            <option value="低">低</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 统计信息 -->
+                <div id="statsPanel" class="bg-blue-50 rounded-lg p-4 mb-6">
+                <div class="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                            <div class="text-lg font-bold text-blue-600" id="totalCases">0</div>
+                            <div class="text-xs text-blue-800">总案例</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-red-600" id="highPriorityCases">0</div>
+                            <div class="text-xs text-red-800">高优先级</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-green-600" id="otherCases">0</div>
+                            <div class="text-xs text-green-800">其他</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 案例列表容器 -->
+                <div id="casesList" class="flex-1 overflow-y-auto space-y-3">
+                    <!-- 案例卡片将动态生成 -->
+                </div>
+
+                <!-- 空状态 -->
+                <div id="emptyState" class="hidden flex-1 flex flex-col items-center justify-center text-center">
+                    <i class="fas fa-inbox text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-600 mb-2">暂无案例数据</h3>
+                    <p class="text-gray-500 text-sm mb-4">点击"新建"按钮创建您的第一个案例</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 - 案例编辑 -->
+        <div class="flex-1 min-h-screen">
+            <div class="container mx-auto px-6 py-8">
+                <div class="max-w-5xl mx-auto">
+                    <div class="bg-white rounded-2xl shadow-lg">
+                        <div class="p-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                                <i class="fas fa-edit mr-2 text-blue-500"></i>案例编辑器
+                            </h2>
+                            
+                            <form id="caseForm" class="space-y-6">
+                                <!-- 基本信息区域 -->
+                                <div class="bg-blue-50 p-4 rounded-xl mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">基本信息</h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                                                案例标题 *
+                                            </label>
+                                            <input type="text" id="title" required
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="请输入案例标题">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                                                案例分类
+                                            </label>
+                                            <select id="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                <option value="技术">技术</option>
+                                                <option value="业务">业务</option>
+                                                <option value="设计">设计</option>
+                                                <option value="其他">其他</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                                        <div>
+                                            <label for="analysisDate" class="block text-sm font-medium text-gray-700 mb-2">
+                                                分析日期
+                                            </label>
+                                            <input type="date" id="analysisDate"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="analyst" class="block text-sm font-medium text-gray-700 mb-2">
+                                                分析人
+                                            </label>
+                                            <input type="text" id="analyst"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="请输入分析人姓名">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
+                                                优先级
+                                            </label>
+                                            <select id="priority" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                <option value="低">低</option>
+                                                <option value="中">中</option>
+                                                <option value="高">高</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-6">
+                                        <label for="tags" class="block text-sm font-medium text-gray-700 mb-2">
+                                            标签
+                                        </label>
+                                        <input type="text" id="tags"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="用逗号分隔多个标签">
+                                    </div>
+                                </div>
+
+                                <!-- 产品信息区域 -->
+                                <div class="bg-green-50 p-4 rounded-xl mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">产品信息</h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="barcode" class="block text-sm font-medium text-gray-700 mb-2">
+                                                条码
+                                            </label>
+                                            <input type="text" id="barcode"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="请输入产品条码">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="productCode" class="block text-sm font-medium text-gray-700 mb-2">
+                                                产品编码
+                                            </label>
+                                            <input type="text" id="productCode"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="请输入产品编码">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 故障信息区域 -->
+                                <div class="bg-yellow-50 p-4 rounded-xl mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">故障信息</h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        <div>
+                                            <label for="faultType" class="block text-sm font-medium text-gray-700 mb-2">
+                                                故障类型
+                                            </label>
+                                            <select id="faultType" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                <option value="硬件故障">硬件故障</option>
+                                                <option value="软件故障">软件故障</option>
+                                                <option value="性能问题">性能问题</option>
+                                                <option value="兼容性问题">兼容性问题</option>
+                                                <option value="其他">其他</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="faultSource" class="block text-sm font-medium text-gray-700 mb-2">
+                                                故障来源
+                                            </label>
+                                            <select id="faultSource" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                <option value="客户反馈">客户反馈</option>
+                                                <option value="生产检测">生产检测</option>
+                                                <option value="内部测试">内部测试</option>
+                                                <option value="其他">其他</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-6">
+                                        <label for="faultDescription" class="block text-sm font-medium text-gray-700 mb-2">
+                                            故障描述
+                                        </label>
+                                        <textarea id="faultDescription" rows="3"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="请描述故障情况..."></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label for="faultPhenomenon" class="block text-sm font-medium text-gray-700 mb-2">
+                                            故障现象
+                                        </label>
+                                        <textarea id="faultPhenomenon" rows="3"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="请描述故障现象..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 故障定位与图片 -->
+                                <div class="bg-purple-50 p-4 rounded-xl mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">故障定位与图片</h3>
+                                    
+                                    <div class="mb-6">
+                                        <label for="faultLocationMethod" class="block text-sm font-medium text-gray-700 mb-2">
+                                            故障定位方法
+                                        </label>
+                                        <textarea id="faultLocationMethod" rows="3"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="请描述故障定位方法..."></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            故障图片上传
+                                        </label>
+                                        <div class="flex items-center space-x-4">
+                                            <input type="file" id="imageUpload" accept="image/*"
+                                                class="hidden" onchange="previewImage(event)">
+                                            <label for="imageUpload" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg cursor-pointer transition-colors">
+                                                <i class="fas fa-upload mr-2"></i>选择图片
+                                            </label>
+                                            <button type="button" id="clearImage" class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors hidden">
+                                                <i class="fas fa-trash mr-2"></i>清除图片
+                                            </button>
+                                        </div>
+                                        <div id="imagePreviewContainer" class="mt-4 hidden">
+                                            <img id="imagePreview" class="image-preview border border-gray-200 rounded-lg" src="" alt="图片预览">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 维修信息区域 -->
+                                <div class="bg-red-50 p-4 rounded-xl mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-4">维修信息</h3>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                        <div>
+                                            <label for="repairTime" class="block text-sm font-medium text-gray-700 mb-2">
+                                                维修时间 (小时)
+                                            </label>
+                                            <input type="number" id="repairTime" step="0.1" min="0"
+                                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                                placeholder="请输入维修时长">
+                                        </div>
+                                        
+                                        <div>
+                                            <label for="repairResult" class="block text-sm font-medium text-gray-700 mb-2">
+                                                维修结果
+                                            </label>
+                                            <select id="repairResult" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                                <option value="已修复">已修复</option>
+                                                <option value="部分修复">部分修复</option>
+                                                <option value="未修复">未修复</option>
+                                                <option value="无法修复">无法修复</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label for="repairExperience" class="block text-sm font-medium text-gray-700 mb-2">
+                                            维修心得
+                                        </label>
+                                        <textarea id="repairExperience" rows="5"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            placeholder="请分享维修心得和经验总结..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- 操作按钮区域 -->
+                                <div class="flex flex-wrap gap-4 pt-4">
+                                    <button type="submit" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200">
+                                        <i class="fas fa-save mr-2"></i>保存案例
+                                    </button>
+                                    <button type="button" id="resetBtn" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200">
+                                        <i class="fas fa-undo mr-2"></i>重置表单
+                                    </button>
+                                    <button type="button" id="importWordBtn" class="bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200">
+                                        <i class="fas fa-file-import mr-2"></i>导入Word
+                                    </button>
+                                    <button type="button" id="exportWordBtn" class="bg-purple-500 hover:bg-purple-600 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200">
+                                        <i class="fas fa-file-export mr-2"></i>导出Word
+                                    </button>
+                                    <input type="file" id="wordFileInput" accept=".docx,.doc" class="hidden" onchange="importWord(event)">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 删除确认模态框 -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-md mx-4 fade-in">
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-4"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">确认删除</h3>
+                <p class="text-gray-600 mb-6">您确定要删除这个案例吗？此操作不可撤销。</p>
+                <div class="flex space-x-4">
+                    <button id="confirmDelete" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition-colors">
+                        确认删除
+                    </button>
+                    <button id="cancelDelete" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg transition-colors">
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态管理
+        const state = {
+            cases: [],
+            currentCase: null,
+            currentDeleteId: null,
+            filters: {
+                search: '',
+                category: '',
+                priority: ''
+            }
+        };
+
+        // DOM 加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+            setupEventListeners();
+            loadCases();
+            // 设置默认日期为今天
+            document.getElementById('analysisDate').valueAsDate = new Date();
+        });
+
+        function initializeSystem() {
+            // 检查本地存储中是否有数据
+            const savedCases = localStorage.getItem('cases');
+            if (savedCases) {
+                state.cases = JSON.parse(savedCases);
+            }
+        }
+
+        function setupEventListeners() {
+            // 表单提交
+            document.getElementById('caseForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveCase();
+            });
+
+            // 重置按钮
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                resetForm();
+            });
+
+            // 新建案例按钮
+            document.getElementById('newCaseBtn').addEventListener('click', function() {
+                createNewCase();
+            });
+
+            // 搜索和筛选
+            document.getElementById('searchInput').addEventListener('input', function() {
+                state.filters.search = this.value.toLowerCase();
+                filterAndDisplayCases();
+            });
+
+            document.getElementById('categoryFilter').addEventListener('change', function() {
+                state.filters.category = this.value;
+                filterAndDisplayCases();
+            });
+
+            document.getElementById('priorityFilter').addEventListener('change', function() {
+                state.filters.priority = this.value;
+                filterAndDisplayCases();
+            });
+
+            // 删除确认
+            document.getElementById('confirmDelete').addEventListener('click', function() {
+                confirmDelete();
+            });
+
+            document.getElementById('cancelDelete').addEventListener('click', function() {
+                closeDeleteModal();
+            });
+
+            // 移动端菜单
+            document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+                toggleMobileMenu();
+            });
+
+            // 清除图片
+            document.getElementById('clearImage').addEventListener('click', function() {
+                clearImagePreview();
+            });
+
+            // Word导入导出
+            document.getElementById('importWordBtn').addEventListener('click', function() {
+                document.getElementById('wordFileInput').click();
+            });
+
+            document.getElementById('exportWordBtn').addEventListener('click', function() {
+                exportToWord();
+            });
+        }
+
+        function loadCases() {
+            try {
+                const savedCases = localStorage.getItem('cases');
+                state.cases = savedCases ? JSON.parse(savedCases) : [];
+                filterAndDisplayCases();
+                updateStats();
+            } catch (error) {
+                console.error('加载案例失败:', error);
+                showAlert('加载案例失败', 'error');
+            }
+        }
+
+        function saveCase() {
+            // 获取图片数据
+            let imageData = null;
+            const previewImg = document.getElementById('imagePreview');
+            if (previewImg.src && previewImg.src !== window.location.href) {
+                imageData = previewImg.src;
+            }
+
+            const caseData = {
+                id: state.currentCase ? state.currentCase.id : Date.now(),
+                title: document.getElementById('title').value.trim(),
+                category: document.getElementById('category').value,
+                priority: document.getElementById('priority').value,
+                tags: document.getElementById('tags').value.split(',').map(tag => tag.trim()).filter(tag => tag),
+                analysisDate: document.getElementById('analysisDate').value,
+                analyst: document.getElementById('analyst').value.trim(),
+                barcode: document.getElementById('barcode').value.trim(),
+                productCode: document.getElementById('productCode').value.trim(),
+                faultType: document.getElementById('faultType').value,
+                faultSource: document.getElementById('faultSource').value,
+                faultDescription: document.getElementById('faultDescription').value.trim(),
+                faultPhenomenon: document.getElementById('faultPhenomenon').value.trim(),
+                faultLocationMethod: document.getElementById('faultLocationMethod').value.trim(),
+                imageData: imageData,
+                repairTime: document.getElementById('repairTime').value,
+                repairResult: document.getElementById('repairResult').value,
+                repairExperience: document.getElementById('repairExperience').value.trim(),
+                timestamp: new Date().toLocaleString('zh-CN'),
+                status: 'active'
+            };
+
+            // 表单验证
+            if (!caseData.title) {
+                showAlert('请输入案例标题', 'error');
+                return;
+            }
+
+            try {
+                // 更新或添加案例
+                const existingIndex = state.cases.findIndex(c => c.id === caseData.id);
+                if (existingIndex >= 0) {
+                    state.cases[existingIndex] = caseData;
+                } else {
+                    state.cases.push(caseData);
+                }
+
+                // 保存到本地存储
+                localStorage.setItem('cases', JSON.stringify(state.cases));
+                
+                showAlert('案例保存成功！', 'success');
+                
+                // 刷新列表
+                filterAndDisplayCases();
+                updateStats();
+                
+            } catch (error) {
+                console.error('保存失败:', error);
+                showAlert('保存失败，请重试', 'error');
+            }
+        }
+
+        function createNewCase() {
+            state.currentCase = null;
+            document.getElementById('caseForm').reset();
+            document.getElementById('analysisDate').valueAsDate = new Date();
+            clearImagePreview();
+            document.getElementById('title').focus();
+        }
+
+        function resetForm() {
+            if (confirm('确定要重置表单吗？所有未保存的更改将丢失。')) {
+                createNewCase();
+                showAlert('表单已重置', 'info');
+            }
+        }
+
+        function filterAndDisplayCases() {
+            const filteredCases = state.cases.filter(caseItem => {
+                const matchesSearch = !state.filters.search || 
+                               caseItem.title.toLowerCase().includes(state.filters.search) || 
+                               caseItem.faultDescription.toLowerCase().includes(state.filters.search) ||
+                               caseItem.productCode.toLowerCase().includes(state.filters.search);
+                const matchesCategory = !state.filters.category || caseItem.category === state.filters.category;
+                const matchesPriority = !state.filters.priority || caseItem.priority === state.filters.priority;
+                
+                return matchesSearch && matchesCategory && matchesPriority;
+            });
+
+            displayCasesList(filteredCases);
+        }
+
+        function displayCasesList(cases) {
+            const container = document.getElementById('casesList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (cases.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = cases.map(caseItem => `
+                <div class="bg-white border border-gray-200 rounded-lg p-4 card-hover fade-in priority-${caseItem.priority === '高' ? 'high' : caseItem.priority === '中' ? 'medium' : 'low'}" 
+                    onclick="selectCase(${caseItem.id})"
+                    style="cursor: pointer;">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-gray-800 text-sm flex-1 mr-2">${caseItem.title}</h4>
+                        <button onclick="event.stopPropagation(); openDeleteModal(${caseItem.id})" 
+                            class="text-gray-400 hover:text-red-500 transition-colors text-xs">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                            ${caseItem.category}
+                        </span>
+                        <span class="inline-block ${
+                            caseItem.priority === '高' ? 'bg-red-100 text-red-800' : 
+                            caseItem.priority === '中' ? 'bg-yellow-100 text-yellow-800' : 
+                            'bg-green-100 text-green-800'
+                        } text-xs px-2 py-1 rounded">
+                            ${caseItem.priority}
+                        </span>
+                    </div>
+                    
+                    <p class="text-gray-600 text-xs line-clamp-2 mb-2">${caseItem.faultDescription || caseItem.repairExperience || '无描述'}</p>
+                    
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        ${caseItem.tags.map(tag => `
+                            <span class="bg-gray-100 text-gray-800 text-xs px-2 py-0.5 rounded">${tag}</span>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="flex justify-between items-center text-xs text-gray-500">
+                        <span>${caseItem.analysisDate || caseItem.timestamp.split(' ')[0]}</span>
+                        <span>${caseItem.analyst || '未知'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectCase(caseId) {
+            const selectedCase = state.cases.find(c => c.id === caseId);
+            if (selectedCase) {
+                state.currentCase = selectedCase;
+                populateForm(selectedCase);
+                
+                // 在移动设备上选择案例后自动隐藏侧边栏
+                if (window.innerWidth <= 768) {
+                    toggleMobileMenu();
+                }
+            }
+        }
+
+        function populateForm(caseData) {
+            document.getElementById('title').value = caseData.title || '';
+            document.getElementById('category').value = caseData.category || '技术';
+            document.getElementById('priority').value = caseData.priority || '中';
+            document.getElementById('tags').value = caseData.tags ? caseData.tags.join(', ') : '';
+            document.getElementById('analysisDate').value = caseData.analysisDate || '';
+            document.getElementById('analyst').value = caseData.analyst || '';
+            document.getElementById('barcode').value = caseData.barcode || '';
+            document.getElementById('productCode').value = caseData.productCode || '';
+            document.getElementById('faultType').value = caseData.faultType || '硬件故障';
+            document.getElementById('faultSource').value = caseData.faultSource || '客户反馈';
+            document.getElementById('faultDescription').value = caseData.faultDescription || '';
+            document.getElementById('faultPhenomenon').value = caseData.faultPhenomenon || '';
+            document.getElementById('faultLocationMethod').value = caseData.faultLocationMethod || '';
+            document.getElementById('repairTime').value = caseData.repairTime || '';
+            document.getElementById('repairResult').value = caseData.repairResult || '已修复';
+            document.getElementById('repairExperience').value = caseData.repairExperience || '';
+
+            // 显示图片预览
+            if (caseData.imageData) {
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                const clearBtn = document.getElementById('clearImage');
+                
+                previewImg.src = caseData.imageData;
+                previewContainer.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearImagePreview();
+            }
+        }
+
+        // 图片预览功能
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewContainer = document.getElementById('imagePreviewContainer');
+                const previewImg = document.getElementById('imagePreview');
+                const clearBtn = document.getElementById('clearImage');
+                
+                previewImg.src = e.target.result;
+                previewContainer.classList.remove('hidden');
+                clearBtn.classList.remove('hidden');
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function clearImagePreview() {
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const previewImg = document.getElementById('imagePreview');
+            const clearBtn = document.getElementById('clearImage');
+            const fileInput = document.getElementById('imageUpload');
+            
+            previewImg.src = '';
+            previewContainer.classList.add('hidden');
+            clearBtn.classList.add('hidden');
+            fileInput.value = '';
+        }
+
+        // 删除功能
+        function openDeleteModal(caseId) {
+            state.currentDeleteId = caseId;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            state.currentDeleteId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        function confirmDelete() {
+            if (state.currentDeleteId) {
+                state.cases = state.cases.filter(caseItem => caseItem.id !== state.currentDeleteId);
+                localStorage.setItem('cases', JSON.stringify(state.cases));
+                filterAndDisplayCases();
+                updateStats();
+                showAlert('案例已删除', 'success');
+                closeDeleteModal();
+                
+                // 如果删除的是当前编辑的案例，重置表单
+                if (state.currentCase && state.currentCase.id === state.currentDeleteId) {
+                    createNewCase();
+                }
+            }
+        }
+
+        function updateStats() {
+            const totalCases = state.cases.length;
+            const highPriority = state.cases.filter(c => c.priority === '高').length;
+            
+            document.getElementById('totalCases').textContent = totalCases;
+            document.getElementById('highPriorityCases').textContent = highPriority;
+            document.getElementById('otherCases').textContent = totalCases - highPriority;
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+            
+            alertDiv.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} mr-2"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // Word导入导出功能
+        function importWord(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 简单处理：实际Word导入比较复杂，这里仅做演示
+            // 真实场景中需要使用专门的库如 mammoth.js 处理.docx文件
+            showAlert('Word导入功能将在完整版中提供', 'info');
+            
+            // 重置文件输入，允许重复选择同一个文件
+            document.getElementById('wordFileInput').value = '';
+        }
+
+        function exportToWord() {
+            if (!state.currentCase && !document.getElementById('title').value) {
+                showAlert('请先填写案例内容或选择一个案例', 'error');
+                return;
+            }
+            
+            // 收集当前表单数据
+            const caseData = {
+                title: document.getElementById('title').value || '未命名案例',
+                category: document.getElementById('category').value,
+                priority: document.getElementById('priority').value,
+                analysisDate: document.getElementById('analysisDate').value || new Date().toLocaleDateString(),
+                analyst: document.getElementById('analyst').value || '未知',
+                barcode: document.getElementById('barcode').value || '无',
+                productCode: document.getElementById('productCode').value || '无',
+                faultType: document.getElementById('faultType').value,
+                faultSource: document.getElementById('faultSource').value,
+                faultDescription: document.getElementById('faultDescription').value || '无',
+                faultPhenomenon: document.getElementById('faultPhenomenon').value || '无',
+                faultLocationMethod: document.getElementById('faultLocationMethod').value || '无',
+                repairTime: document.getElementById('repairTime').value || '无',
+                repairResult: document.getElementById('repairResult').value,
+                repairExperience: document.getElementById('repairExperience').value || '无',
+                tags: document.getElementById('tags').value || '无'
+            };
+            
+            // 创建一个简单的HTML文档作为Word导出内容
+            const htmlContent = `
+                <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>${caseData.title}</title>
+                        <style>
+                            body { font-family: SimSun; font-size: 12pt; }
+                            h1 { color: #2c3e50; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+                            .section { margin: 20px 0; }
+                            .section-title { font-weight: bold; color: #3498db; font-size: 14pt; margin-bottom: 10px; }
+                            .info-row { margin: 8px 0; }
+                            .label { display: inline-block; width: 120px; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>${caseData.title}</h1>
+                        
+                        <div class="section">
+                            <div class="section-title">基本信息</div>
+                            <div class="info-row"><span class="label">案例分类：</span>${caseData.category}</div>
+                            <div class="info-row"><span class="label">优先级：</span>${caseData.priority}</div>
+                            <div class="info-row"><span class="label">分析日期：</span>${caseData.analysisDate}</div>
+                            <div class="info-row"><span class="label">分析人：</span>${caseData.analyst}</div>
+                            <div class="info-row"><span class="label">标签：</span>${caseData.tags}</div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">产品信息</div>
+                            <div class="info-row"><span class="label">条码：</span>${caseData.barcode}</div>
+                            <div class="info-row"><span class="label">产品编码：</span>${caseData.productCode}</div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">故障信息</div>
+                            <div class="info-row"><span class="label">故障类型：</span>${caseData.faultType}</div>
+                            <div class="info-row"><span class="label">故障来源：</span>${caseData.faultSource}</div>
+                            <div class="info-row"><span class="label">故障描述：</span>${caseData.faultDescription}</div>
+                            <div class="info-row"><span class="label">故障现象：</span>${caseData.faultPhenomenon}</div>
+                            <div class="info-row"><span class="label">故障定位方法：</span>${caseData.faultLocationMethod}</div>
+                        </div>
+                        
+                        <div class="section">
+                            <div class="section-title">维修信息</div>
+                            <div class="info-row"><span class="label">维修时间：</span>${caseData.repairTime} 小时</div>
+                            <div class="info-row"><span class="label">维修结果：</span>${caseData.repairResult}</div>
+                            <div class="info-row"><span class="label">维修心得：</span>${caseData.repairExperience}</div>
+                        </div>
+                    </body>
+                </html>
+            `;
+            
+            // 创建Blob对象并下载
+            const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${caseData.title}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showAlert('案例已导出为Word文档', 'success');
+        }
+    </script>
+</body>
+</html>
